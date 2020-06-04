@@ -1,0 +1,230 @@
+{% load lookup %}
+<div id="{{ id }}">
+    {% load static %}
+    <audio id="{{ id }}_bell">
+        <source src="{% static sound %}">
+    </audio>
+    <div class="grid-x">
+        <span class="medium-1 cell">
+        <button class="button" type="button" data-toggle="{{ id }}_config-dropdown">{{ currency }} Config</button>
+        </span>
+        <span class="medium-3 cell">
+        <span id="{{ id }}_time"></span></span>
+        <span class="medium-1 cell">
+            MuteTime:<input id="{{ id }}_mute" type="number" title="mute" step="60" value="0">
+        </span>
+    </div>
+    <div class="dropdown-pane" id="{{ id }}_config-dropdown" data-dropdown data-auto-focus="true">
+        <form id="{{ id }}_form">
+            <div class="grid-x">
+                <div class="cells">
+                    <label>Update Interval [sec]:<input id="{{ id }}_interval" type="number"
+                                                        value="{{ configs|lookup:currency|lookup:'interval' }}"
+                                                        step="1"></label>
+                </div>
+            </div>
+            <div class="grid-x">
+                <div class="cells">
+                    <label>Row Num:<input id="{{ id }}_row_n" type="number" step="10"
+                                          value="{{ configs|lookup:currency|lookup:'row_n' }}"></label>
+                </div>
+            </div>
+            <div class="grid-x">
+                <div class="cells">
+                    <label>Filter:
+                        <select id='{{ id }}_filter' multiple='multiple'>
+                            {% for k, v in filter_instruments.items %}
+                                {% if k == currency %}
+                                    {% for name, instruments in v.items %}
+                                        <optgroup label="{{ name }}">
+                                            {% for instrument, selected in instruments.items %}
+                                                <option value="{{ name }}_{{ instrument }}" {% if selected %}
+                                                        selected{% endif %}>
+                                                    {{ instrument }}
+                                                </option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <div class="grid-x">
+                <div class="cells">
+                    <label>Rate Threshold [%]:<input id="{{ id }}_rate_threshold" type="number" step="0.1"
+                                                     value="{{ configs|lookup:currency|lookup:'rate_threshold' }}"></label>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="grid-x">
+        <table id="{{ id }}_arb_table" class="unstriped">
+            <thead>
+            <tr>
+                {% for k, v in filter_instruments.items %}
+                    {% if k == currency %}
+                        {% if currency.lower in v %}
+                            <th>#</th>
+                            <th>Rate</th>
+                            <th>Diff</th>
+                            <th>A</th>
+                            <th>A.ask</th>
+                            <th>B</th>
+                            <th>B.bid</th>
+                            <th>C</th>
+                            <th>C.ask</th>
+                            <th>D</th>
+                            <th>D.bid</th>
+                        {% else %}
+                            <th>#</th>
+                            <th>Rate</th>
+                            <th>Diff</th>
+                            <th>A</th>
+                            <th>A.ask</th>
+                            <th>B</th>
+                            <th>B.bid</th>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    $(function () {
+        let mute = false;
+        let cookie = {
+            'interval': 5,
+            'row_n': 20,
+            'rate_threshold': 1.0,
+        };
+        $.extend(cookie, Cookies.getJSON('{{ currency }}') || {});
+        $(function () {
+            //$('#{{id}}_interval').val(cookie.interval);
+            //$('#{{id}}_row_n').val(cookie.row_n);
+            //$('#{{id}}_rate_threshold').val(cookie.rate_threshold);
+        });
+        $(function () {
+            $('#{{ id }}_form').on('change', function () {
+                $.ajax({
+                    url: '/arb/config/{{ currency }}/',
+                    type: 'POST',
+                    headers: {"X-CSRFToken": '{{ csrf_token }}'},
+                    data: {
+                        config: JSON.stringify({
+                            interval: $('#{{id}}_interval').val(),
+                            row_n: $('#{{id}}_row_n').val(),
+                            rate_threshold: $('#{{id}}_rate_threshold').val(),
+                        }),
+                    },
+                });
+            });
+        });
+
+        function set_cookie() {
+            cookie.interval = $('#{{id}}_interval').val();
+            cookie.row_n = $('#{{id}}_row_n').val();
+            cookie.rate_threshold = $('#{{id}}_rate_threshold').val();
+            Cookies.set('{{ currency }}', cookie);
+        }
+
+        function select_update(values, b) {
+            let filter_instruments = {};
+            for (let i = 0; i < values.length; i++) {
+                filter_instruments[values[i]] = b;
+            }
+            $.ajax({
+                url: '/arb/config/{{ currency }}/',
+                type: 'POST',
+                headers: {"X-CSRFToken": '{{ csrf_token }}'},
+                data: {
+                    filter_instruments: JSON.stringify(filter_instruments),
+                },
+            });
+        }
+
+        $('#{{id}}_filter').multiSelect({
+            selectableOptgroup: true,
+            selectableHeader: "<div class='custom-header'>Disabled items</div>",
+            selectionHeader: "<div class='custom-header'>Enabled items</div>",
+            afterSelect: function (values) {
+                console.log('selected', values);
+                select_update(values, true);
+            },
+            afterDeselect: function (values) {
+                console.log('deselected', values);
+                select_update(values, false);
+            },
+        });
+
+        function reduce_time() {
+            let timer = $('#{{ id }}_mute');
+            if (timer.val() <= 0) {
+                mute = false;
+            } else {
+                mute = true;
+                timer.val(timer.val() - 1);
+            }
+        }
+
+        window.setInterval(reduce_time, 1000);
+
+        function update_table(id, data) {
+            let tbody = $(id).find('tbody');
+            tbody.empty();
+            let max_rate = 0;
+            for (let i = 0; i < data.records.length; i++) {
+                let record = data.records[i];
+                let tr = $('<tr></tr>');
+                tr.append(`<td>${i + 1}</td>`);
+                max_rate = Math.max(max_rate, record.rate);
+                tr.append(`<td>${(record.rate * 100 - 100).toFixed(3)} %</td>`);
+                tr.append(`<td>${record.diff}</td>`);
+                for (let j = 0; j < record.data.length; j++) {
+                    let item = record.data[j];
+                    tr.append(`<td>${item.name}<br>${item.instrument}</td>`);
+                    if (j % 2 === 0) {
+                        tr.append(`<td>${item.ask_jpy}<br>(${item.ask})</td>`);
+                    } else {
+                        tr.append(`<td>${item.bid_jpy}<br>(${item.bid})</td>`);
+                    }
+                }
+                tbody.append(tr);
+            }
+            if (!mute && (max_rate >= ($('#{{id}}_rate_threshold').val() / 100 + 1))) {
+                document.getElementById('{{id}}_bell').play();
+            }
+            $('#{{id}}_time').text(data.created_at);
+        }
+
+        function update_loop() {
+            $.ajax({
+                url: '/arb/get/{{ currency }}/',
+                type: 'GET',
+                data: {
+                    n: $('#{{id}}_row_n').val(),
+                },
+            }).done(function (data) {
+                window.setTimeout(update_loop, $('#{{id}}_interval').val() * 1000);
+                //set_cookie();
+                update_table('#{{id}}_arb_table', data);
+            }).fail(function () {
+                console.log('ERROR');
+                window.setTimeout(update_loop, $('#{{id}}_interval').val() * 1000);
+            });
+        }
+
+        // initialize config
+        $.ajax({
+            url: '/arb/config/{{ currency }}/',
+            type: 'POST',
+            headers: {"X-CSRFToken": '{{ csrf_token }}'},
+            data: {},
+        });
+        $(update_loop);
+    });
+</script>

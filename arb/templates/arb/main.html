@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ currency }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/css/foundation.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/multi-select/0.9.12/css/multi-select.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.1.4/js.cookie.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/multi-select/0.9.12/js/jquery.multi-select.min.js"></script>
+</head>
+<style>
+    html {
+        font-size: 80.0%;
+    }
+</style>
+<body>
+<ul class="tabs" data-tabs id="arb-tabs">
+    <li class="tabs-title is-active"><a href="#btc_content" aria-selected="true">BTC</a></li>
+    <li class="tabs-title"><a data-tabs-target="eth_content" href="#eth_content">ETH</a></li>
+    <li class="tabs-title"><a data-tabs-target="qash_content" href="#qash_content">QASH</a></li>
+    <li class="tabs-title"><a data-tabs-target="quoine_content" href="#quoine_content">quoine</a></li>
+</ul>
+<div class="tabs-content" data-tabs-content="arb-tabs">
+    <div class="tabs-panel is-active" id="btc_content">
+        {% include 'arb/content.html' with id='btc' currency='BTC' sound=dialog %}
+    </div>
+    <div class="tabs-panel" id="eth_content">
+        {% include 'arb/content.html' with id='eth' currency='ETH' sound=dialog %}
+    </div>
+    <div class="tabs-panel" id="qash_content">
+        {% include 'arb/content.html' with id='qash' currency='QASH' sound=dialog %}
+    </div>
+    <div class="tabs-panel" id="quoine_content">
+        {% include 'arb/content.html' with id='quoine' currency='QUOINE' sound=bell %}
+    </div>
+</div>
+</body>
+<script>
+    $(document).foundation();
+</script>
+</html>

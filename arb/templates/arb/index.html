@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ currency }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/css/foundation.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/multi-select/0.9.12/css/multi-select.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/6.4.3/js/foundation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/2.1.4/js.cookie.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/multi-select/0.9.12/js/jquery.multi-select.min.js"></script>
+</head>
+<style>
+    .resizable {
+        overflow: auto; /* chromeはautoじゃないとresizeできない*/
+        resize: both;
+        width: 200px;
+        height: 200px;
+    }
+
+    .resizable > iframe {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+    }
+
+</style>
+<body>
+<div class="grid-container">
+    <div class="grid-x full">
+        <div class="large-6 cell resizable">
+            <iframe src='/arb/BTC/' name="BTC">
+            </iframe>
+        </div>
+        <div class="large-6 cell resizable">
+            <iframe src='/arb/BTC/' name="BTC">
+            </iframe>
+        </div>
+    </div>
+    <div class="grid-x full">
+        <div class="large-6 cell resizable">
+            <iframe src='/arb/BTC/' name="BTC">
+            </iframe>
+        </div>
+    </div>
+</div>
+</body>
+</html>
